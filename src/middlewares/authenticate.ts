@@ -1,16 +1,20 @@
 import HttpError from '../helpers/HttpError';
 import jwt from 'jsonwebtoken';
 import { findSession, findUser } from '../services/authServices';
-import { env } from '../helpers/env.js';
+import env from '../helpers/env.js';
 import { Controller } from '../types';
 
 export const authenticate: Controller = async (req, res, next) => {
   try {
     const { authorization } = req.headers;
-    const ACCESS_JWT_SECRET = env('ACCESS_JWT_SECRET');
+    const JWT_SECRET = env('JWT_SECRET');
 
     if (!authorization) {
       throw new HttpError(401, `Authorization header not found`);
+    }
+
+    if (!JWT_SECRET) {
+      throw new HttpError(500, 'JWT secret is not defined');
     }
 
     const [bearer, token] = authorization.split(' ');
@@ -18,7 +22,7 @@ export const authenticate: Controller = async (req, res, next) => {
     if (bearer !== 'Bearer') {
       throw new HttpError(401, 'Bearer not found');
     }
-    const { id } = jwt.verify(token, ACCESS_JWT_SECRET) as jwt.JwtPayload;
+    const { id } = jwt.verify(token,JWT_SECRET as string) as jwt.JwtPayload;
 
     const user = await findUser({ _id: id });
 

@@ -11,11 +11,11 @@ import boardRouter from './routes/boardRouter';
 import columnRouter from './routes/columnRouter';
 import supportRouter from './routes/supportRouter';
 
-import { env } from './helpers/env';
+import  env  from './helpers/env';
 import HttpError from './helpers/HttpError';
 import swaggerSpec from './helpers/swagger';
 
-import { NextFunction, Request, Response } from 'express';
+import { Request, Response } from 'express';
 
 const publicDirPath = path.resolve('src', 'public');
 
@@ -45,7 +45,7 @@ const startServer = async () => {
     res.status(404).json({ message: 'Route not found' });
   });
 
-  app.use((err: HttpError, req: Request, res: Response, next: NextFunction) => {
+  app.use((err: HttpError, req: Request, res: Response) => {
     if (err instanceof HttpError) {
       res.status(err.statusCode).json({ message: err.message });
     } else {

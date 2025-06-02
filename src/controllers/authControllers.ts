@@ -11,10 +11,11 @@ import * as authServices from '../services/authServices';
 import HttpError from '../helpers/HttpError';
 import cloudinary from '../helpers/cloudinary';
 import ctrlWrapper from '../decorators/ctrlWrapper';
-import { env } from '../helpers/env';
-import { sendMail } from '../helpers/sendEmail';
-
+import env from '../helpers/env';
+// Make sure the sendMail helper exists at the specified path or update the path accordingly
+// If the file does not exist, create it at ../helpers/sendMail.ts with the appropriate implementation.
 import { Controller } from '../types';
+import sendEmail from '../helpers/sendEmail';
 
 const registerUser: Controller = async (req, res) => {
   const { username, email, password } = req.body;
@@ -27,13 +28,13 @@ const registerUser: Controller = async (req, res) => {
 
   const hashPassword = await bcrypt.hash(password, 10);
 
-  const verificationToken = nanoid(12);
+  const verificationCode = nanoid(12);
 
   const newUser = await authServices.registerUser({
     username,
     email,
     password: hashPassword,
-    verificationToken,
+    verificationToken: verificationCode,
   });
 
   const BASE_URL = env('BASE_URL');
@@ -42,10 +43,10 @@ const registerUser: Controller = async (req, res) => {
     to: email,
     subject: 'Confirm your registration in TaskPro app',
     text: 'Press on the link to confirm your email',
-    html: `Good day! Please click on the following link to confirm your account in TaskPro app. <a href="${BASE_URL}/auth/verify/${verificationToken}" target="_blank" rel="noopener noreferrer">Confirm my mail</a>`,
+    html: `Good day! Please click on the following link to confirm your account in TaskPro app. <a href="${BASE_URL}/auth/verify/${verificationCode}" target="_blank" rel="noopener noreferrer">Confirm my mail</a>`,
   };
 
-  sendMail(data);
+  sendEmail(data);
 
   res.json({
     status: 201,
@@ -60,8 +61,12 @@ const registerUser: Controller = async (req, res) => {
 const loginUser: Controller = async (req, res) => {
   const { email, password } = req.body;
 
-  const ACCESS_JWT_SECRET = env('ACCESS_JWT_SECRET');
-  const REFRESH_JWT_SECRET = env('REFRESH_JWT_SECRET');
+  const JWT_SECRET = env('JWT_SECRET');
+  const JWT_EXPIRATION = env('JWT_EXPIRATION') || '1d';
+
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is not set');
+  }
 
   const user = await authServices.findUser({ email });
 
@@ -82,38 +87,19 @@ const loginUser: Controller = async (req, res) => {
     );
   }
 
-  const { _id } = user;
+  const payload = { id: user._id };
 
-  await authServices.abortUserSession({ userId: _id });
-
-  const payload = { id: _id };
-
-  const accessToken = jwt.sign(payload, ACCESS_JWT_SECRET, { expiresIn: '1h' });
-  const refreshToken = jwt.sign(payload, REFRESH_JWT_SECRET, {
-    expiresIn: '7d',
-  });
-
-  const newSession = await authServices.createSession({
-    userId: _id,
-    accessToken,
-    refreshToken,
-  });
-
-  if (!newSession) {
-    throw new HttpError(400, `Something went wrong during session creation`);
-  }
+  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
 
   res.json({
     status: 200,
     data: {
-      sid: newSession?._id,
-      accessToken,
-      refreshToken,
+      token,
       user: {
-        username: user?.username,
-        email: user?.email,
-        avatarUrl: user?.avatarUrl,
-        theme: user?.theme,
+        username: user.username,
+        email: user.email,
+        avatarUrl: user.avatarUrl,
+        theme: user.theme,
       },
     },
   });
@@ -177,7 +163,7 @@ const patchUser: Controller = async (req, res) => {
       html: `Good day! Please click on the following link to confirm your account in TaskPro app. <a href="${BASE_URL}/auth/verify/${verificationToken}" target="_blank" rel="noopener noreferrer">Confirm my mail</a>`,
     };
 
-    sendMail(data);
+    sendEmail(data);
   }
 
   if (req?.file?.path) {
@@ -273,7 +259,7 @@ const resendVerifyMessage: Controller = async (req, res) => {
     html: `Good day! Please click on the following link to confirm your account in TaskPro app. <a href="${BASE_URL}/auth/verify/${verificationToken}" target="_blank" rel="noopener noreferrer">Confirm my mail</a>`,
   };
 
-  sendMail(data);
+  sendEmail(data);
 
   res.json({
     status: 200,
@@ -282,55 +268,40 @@ const resendVerifyMessage: Controller = async (req, res) => {
 };
 
 const refreshTokens: Controller = async (req, res) => {
-  const { sid } = req.body;
   const { authorization } = req.headers;
 
-  const REFRESH_JWT_SECRET = env('REFRESH_JWT_SECRET');
-  const ACCESS_JWT_SECRET = env('ACCESS_JWT_SECRET');
+  const JWT_SECRET = env('JWT_SECRET');
+  const JWT_EXPIRATION = env('JWT_EXPIRATION') || '1d';
 
   if (!authorization) {
-    throw new HttpError(401, `Authorization header not found`);
+    throw new HttpError(401, 'Authorization header not found');
   }
 
-  const [bearer, oldRefreshToken] = authorization.split(' ');
-
-  if (bearer !== 'Bearer') {
-    throw new HttpError(401, 'Bearer not found');
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is not set');
   }
 
-  const { id } = jwt.verify(
-    oldRefreshToken,
-    REFRESH_JWT_SECRET
-  ) as jwt.JwtPayload;
+  const [bearer, token] = authorization.split(' ');
 
-  const currentSession = await authServices.abortSession({
-    userId: id,
-    _id: sid,
-  });
-
-  if (!currentSession) {
-    throw new HttpError(401, 'Session not found');
+  if (bearer !== 'Bearer' || !token) {
+    throw new HttpError(401, 'Invalid token format');
   }
 
-  const payload = { id };
+  let decoded;
+  try {
+    decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload;
+  } catch {
+    throw new HttpError(401, 'Invalid or expired token');
+  }
 
-  const accessToken = jwt.sign(payload, ACCESS_JWT_SECRET, { expiresIn: '1h' });
-  const refreshToken = jwt.sign(payload, REFRESH_JWT_SECRET, {
-    expiresIn: '7d',
-  });
+  const payload = { id: decoded.id };
 
-  const newSession = await authServices.createSession({
-    userId: id,
-    accessToken,
-    refreshToken,
-  });
+  const newToken = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
 
   res.json({
     status: 200,
     data: {
-      sid: newSession?._id,
-      accessToken: newSession?.accessToken,
-      refreshToken: newSession?.refreshToken,
+      token: newToken,
     },
   });
 };
@@ -359,96 +330,47 @@ const googleRedirect: Controller = async (req, res) => {
   const urlParams = queryString.parse(urlObj.search);
   const code = urlParams.code;
 
-  const tokenData = await axios({
-    url: `https://oauth2.googleapis.com/token`,
-    method: 'post',
-    data: {
-      client_id: env('GOOGLE_CLIENT_ID'),
-      client_secret: env('GOOGLE_CLIENT_SECRET'),
-      redirect_uri: `${env('BASE_URL')}/auth/google-redirect`,
-      grant_type: 'authorization_code',
-      code,
-    },
+  const tokenData = await axios.post(`https://oauth2.googleapis.com/token`, {
+    client_id: env('GOOGLE_CLIENT_ID'),
+    client_secret: env('GOOGLE_CLIENT_SECRET'),
+    redirect_uri: `${env('BASE_URL')}/auth/google-redirect`,
+    grant_type: 'authorization_code',
+    code,
   });
 
-  const { data } = await axios({
-    url: 'https://www.googleapis.com/oauth2/v2/userinfo',
-    method: 'get',
+  const { data: googleUser } = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
     headers: {
       Authorization: `Bearer ${tokenData.data.access_token}`,
     },
   });
 
-  const { email, name, picture, id } = data;
+  const { email, name, picture, id } = googleUser;
 
-  const ACCESS_JWT_SECRET = env('ACCESS_JWT_SECRET');
-  const REFRESH_JWT_SECRET = env('REFRESH_JWT_SECRET');
+  const JWT_SECRET = env('JWT_SECRET');
+  const JWT_EXPIRATION = env('JWT_EXPIRATION') || '1d';
 
-  const user = await authServices.findUser({ email });
+  let user = await authServices.findUser({ email });
 
   if (!user) {
-    const hashPassword = await bcrypt.hash(id, 10);
+    const hashedPassword = await bcrypt.hash(id, 10);
 
-    const newUser = await authServices.registerUser({
+    user = await authServices.registerUser({
       username: name,
       email,
-      password: hashPassword,
+      password: hashedPassword,
       verificationToken: null,
       isVerified: true,
       avatarUrl: picture,
     });
-
-    const { _id } = newUser;
-    const payload = { id: _id };
-
-    const accessToken = jwt.sign(payload, ACCESS_JWT_SECRET, {
-      expiresIn: '1h',
-    });
-    const refreshToken = jwt.sign(payload, REFRESH_JWT_SECRET, {
-      expiresIn: '7d',
-    });
-
-    const newSession = await authServices.createSession({
-      userId: _id,
-      accessToken,
-      refreshToken,
-    });
-
-    return res.redirect(
-      `${env('FRONTEND_URL')}?sid=${newSession._id}&accessToken=${
-        newSession.accessToken
-      }&refreshToken=${newSession.refreshToken}`
-    );
   }
 
-  const { _id } = user;
-
-  await authServices.abortUserSession({ userId: _id });
-
-  const payload = { id: _id };
-
-  const accessToken = jwt.sign(payload, ACCESS_JWT_SECRET, {
-    expiresIn: '1h',
-  });
-  const refreshToken = jwt.sign(payload, REFRESH_JWT_SECRET, {
-    expiresIn: '7d',
-  });
-
-  const newSession = await authServices.createSession({
-    userId: _id,
-    accessToken,
-    refreshToken,
-  });
-
-  if (!newSession) {
-    throw new HttpError(400, 'Something went wrong during session creation');
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is not set');
   }
 
-  return res.redirect(
-    `${env('FRONTEND_URL')}?sid=${newSession._id}&accessToken=${
-      newSession.accessToken
-    }&refreshToken=${newSession.refreshToken}`
-  );
+  const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
+
+  return res.redirect(`${env('FRONTEND_URL')}?token=${token}`);
 };
 
 export default {

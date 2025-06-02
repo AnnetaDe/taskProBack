@@ -1,8 +1,8 @@
 import ctrlWrapper from '../decorators/ctrlWrapper';
 import { getMarkup } from '../constants/supportEmail';
-import { sendMail } from '../helpers/sendEmail';
 
 import { Controller } from '../types';
+import sendEmail from '../helpers/sendEmail';
 
 const createRequest: Controller = async (req, res) => {
   const { email, message } = req.body;
@@ -13,7 +13,7 @@ const createRequest: Controller = async (req, res) => {
     html: getMarkup(email, message),
   };
 
-  sendMail(emailData);
+  sendEmail(emailData);
 
   res.status(200).json({
     status: 200,

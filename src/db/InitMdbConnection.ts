@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-import { env } from '../helpers/env';
+import env from '../helpers/env';
 
 const initMdbConnection = async () => {
   try {

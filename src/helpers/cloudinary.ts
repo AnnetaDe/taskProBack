@@ -1,4 +1,4 @@
-import { env } from './env';
+import env from './env';
 import { v2 as cloudinary } from 'cloudinary';
 import dotenv from 'dotenv';
 

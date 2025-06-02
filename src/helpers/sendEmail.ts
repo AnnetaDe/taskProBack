@@ -1,24 +1,34 @@
-import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
-import { env } from './env';
-import { IEmailData } from '../types/index';
-
 dotenv.config();
-const UKR_NET_EMAIL = env('UKR_NET_EMAIL');
-const UKR_NET_PASSWORD = env('UKR_NET_PASSWORD');
+import nodemailer from 'nodemailer';
+import { SentMessageInfo } from 'nodemailer';
+
+const { EMAIL, EMAIL_PASSWORD } = process.env;
 
 const nodemailerConfig = {
   host: 'smtp.ukr.net',
   port: 465,
   secure: true,
   auth: {
-    user: UKR_NET_EMAIL,
-    pass: UKR_NET_PASSWORD,
+    user: EMAIL,
+    pass: EMAIL_PASSWORD,
   },
 };
-const transporter = nodemailer.createTransport(nodemailerConfig);
 
-export const sendMail = (data: IEmailData) => {
-  const email = { ...data, from: UKR_NET_EMAIL };
-  transporter.sendMail(email);
+const transport = nodemailer.createTransport(nodemailerConfig);
+
+interface EmailData {
+    from?: string;
+    to: string;
+    subject: string;
+    html: string;
+}
+
+
+const sendEmail = (data: EmailData): Promise<SentMessageInfo> => {
+    const email: EmailData = { ...data, from: EMAIL };
+    return transport.sendMail(email);
 };
+
+
+export default sendEmail;
