@@ -22,8 +22,9 @@ const publicDirPath = path.resolve('src', 'public');
 dotenv.config();
 
 const startServer = async () => {
-  const PORT = env('PORT');
+  const PORT = env('PORT')||5000;
   const app = express();
+  console.log(`Server running on port ${PORT}`);
 
   app.use(express.static(publicDirPath));
   app.use(morgan('tiny'));
