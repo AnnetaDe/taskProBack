@@ -33,7 +33,11 @@ export async function createSession({
   accessToken,
   refreshToken,
 }: ISessionBody) {
-  return Session.create({ userId, accessToken, refreshToken });
+  return Session.findOneAndUpdate(
+    { userId },
+    { accessToken, refreshToken },
+    { upsert: true, new: true }
+  );
 }
 export async function abortUserSession({ userId }: ISessionBody) {
   return Session.findOneAndDelete({ userId });

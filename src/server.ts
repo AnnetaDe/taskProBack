@@ -4,6 +4,8 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import express from 'express';
 import swaggerUi from 'swagger-ui-express';
+import cookieParser from 'cookie-parser';
+
 
 import authRouter from './routes/authRouter';
 import taskRouter from './routes/taskRouter';
@@ -22,27 +24,25 @@ const publicDirPath = path.resolve('src', 'public');
 dotenv.config();
 
 const startServer = async () => {
-  const PORT = env('PORT')||5000;
+  const PORT = env('PORT')||3000;
   const app = express();
-  console.log(`Server running on port ${PORT}`);
+  const FRONTEND_URL = env('FRONTEND_URL') || 'http://192.168.1.73:5173';
+
+  console.log(`Server running on port ${PORT}`, `Frontend URL: ${FRONTEND_URL}`, `Public directory: ${publicDirPath}`);
 
   app.use(express.static(publicDirPath));
   app.use(morgan('tiny'));
+    app.use(cookieParser());
+
   app.use(cors({
-    origin: 'http://localhost:5173',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    origin: [FRONTEND_URL, 'http://192.168.1.73:5173'],
     credentials: true,
-  }));
-  app.options('*', cors({
-    origin: env('FRONTEND_URL') || 'http://localhost:5173',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+
   }));
   app.use(express.json());
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
   app.use('/api/auth', authRouter);
 
   app.use('/api', taskRouter);

@@ -1,3 +1,4 @@
+import cookieParser from 'cookie-parser';
 import HttpError from '../helpers/HttpError';
 import jwt from 'jsonwebtoken';
 import { findSession, findUser } from '../services/authServices';
@@ -6,23 +7,29 @@ import { Controller } from '../types';
 
 export const authenticate: Controller = async (req, res, next) => {
   try {
-    const { authorization } = req.headers;
-    const JWT_SECRET = env('JWT_SECRET');
+    cookieParser()(req, res, () => {
+      console.log('Cookies:', req.cookies);
+      console.log('Headers:', req.headers);
+    });
+    const token =
+  req.headers.authorization?.startsWith('Bearer ')
+    ? req.headers.authorization.split(' ')[1]
+    : req.cookies?.token;
 
-    if (!authorization) {
-      throw new HttpError(401, `Authorization header not found`);
+    console.log('Token:', req.headers.authorization);
+    console.log('Cookie Token:', req.cookies);
+ 
+    if (!token) {
+      throw new HttpError(401, 'Authentication token not found');
     }
+
+    const JWT_SECRET = env('JWT_SECRET');
 
     if (!JWT_SECRET) {
       throw new HttpError(500, 'JWT secret is not defined');
     }
 
-    const [bearer, token] = authorization.split(' ');
-
-    if (bearer !== 'Bearer') {
-      throw new HttpError(401, 'Bearer not found');
-    }
-    const { id } = jwt.verify(token,JWT_SECRET as string) as jwt.JwtPayload;
+    const { id } = jwt.verify(token, JWT_SECRET as string) as jwt.JwtPayload;
 
     const user = await findUser({ _id: id });
 
@@ -31,6 +38,7 @@ export const authenticate: Controller = async (req, res, next) => {
     }
 
     const session = await findSession({ userId: id });
+    console.log('Session:', session);
 
     if (!session) {
       throw new HttpError(401, 'User already logged out');
@@ -45,6 +53,7 @@ export const authenticate: Controller = async (req, res, next) => {
       avatarUrl,
       theme,
       isVerified,
+    
     };
 
     next();

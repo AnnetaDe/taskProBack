@@ -60,12 +60,16 @@ const registerUser: Controller = async (req, res) => {
 
 const loginUser: Controller = async (req, res) => {
   const { email, password } = req.body;
-
   const JWT_SECRET = env('JWT_SECRET');
+  const JWT_SECRET_REFRESH = env('JWT_SECRET_REFRESH');
   const JWT_EXPIRATION = env('JWT_EXPIRATION') || '1d';
+  const JWT_REFRESH_EXPIRATION = env('JWT_REFRESH_EXPIRATION') || '7d';
 
   if (!JWT_SECRET) {
     throw new Error('JWT_SECRET environment variable is not set');
+  }
+  if (!JWT_SECRET_REFRESH) {
+    throw new Error('JWT_SECRET_REFRESH environment variable is not set');
   }
 
   const user = await authServices.findUser({ email });
@@ -75,7 +79,6 @@ const loginUser: Controller = async (req, res) => {
   }
 
   const passwordCompare = await bcrypt.compare(password, user.password);
-
   if (!passwordCompare) {
     throw new HttpError(400, 'Email or password invalid');
   }
@@ -86,22 +89,46 @@ const loginUser: Controller = async (req, res) => {
       'User mail is not verified, please check your mail for following instructions'
     );
   }
-
   const payload = { id: user._id };
-
   const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
+  const refreshToken = jwt.sign(
+    payload,
+    JWT_SECRET_REFRESH,
+    { expiresIn: JWT_REFRESH_EXPIRATION }
+  );
+  const session = await authServices.createSession({
+    userId: user._id,
+    accessToken: token,
+    refreshToken: refreshToken, 
+  });
+  const isProd = process.env.NODE_ENV === 'production';
 
   res.cookie('token', token, {
     httpOnly: true,
-    secure:true,
-    sameSite: 'none',
-    maxAge: 1000 * 60 * 60 * 24, // 1 day
+    secure: isProd,              // false у dev
+    sameSite: isProd ? 'none' : 'lax', // ❗ must be 'lax' in dev
+    maxAge: 1000 * 60 * 60 * 24,
   });
 
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    maxAge: 1000 * 60 * 60 * 24 * 7,
+  });
+  
+  res.cookie('sid', String(session._id), {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    maxAge: 1000 * 60 * 60 * 24,
+  });
   res.json({
     status: 200,
     data: {
       token,
+      refreshToken,
+      sessionId: session._id,
       user: {
         username: user.username,
         email: user.email,
@@ -121,6 +148,7 @@ const logoutUser: Controller = async (req, res) => {
 };
 
 const getCurrentUser: Controller = async (req, res) => {
+  console.log('Current user:', req.user);
   const { email, username, avatarUrl, theme } = req.user as {
     email: string;
     username: string;
