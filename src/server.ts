@@ -29,13 +29,13 @@ const startServer = async () => {
   app.use(express.static(publicDirPath));
   app.use(morgan('tiny'));
   app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: 'http://localhost:5173',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   }));
   app.options('*', cors({
-    origin: env('FRONTEND_URL') || 'http://localhost:3000',
+    origin: env('FRONTEND_URL') || 'http://localhost:5173',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,

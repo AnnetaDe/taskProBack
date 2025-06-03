@@ -91,6 +91,13 @@ const loginUser: Controller = async (req, res) => {
 
   const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
 
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure:true,
+    sameSite: 'none',
+    maxAge: 1000 * 60 * 60 * 24, // 1 day
+  });
+
   res.json({
     status: 200,
     data: {
