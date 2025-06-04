@@ -105,8 +105,8 @@ const loginUser: Controller = async (req, res) => {
 
   res.cookie('token', token, {
     httpOnly: true,
-    secure: isProd,              // false у dev
-    sameSite: isProd ? 'none' : 'lax', // ❗ must be 'lax' in dev
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
     maxAge: 1000 * 60 * 60 * 24,
   });
 

@@ -14,7 +14,7 @@
     "start": "tsc && tsc-alias && node ./dist/app.js"
   },
   "keywords": [],
-  "author": "Dmytro Lysachenko <dlysachenko98@gmail.com>",
+  "author": "Ann Denysenko",
   "license": "ISC",
   "dependencies": {
     "axios": "^1.7.3",
@@ -53,9 +53,10 @@
     "eslint": "^9.8.0",
     "globals": "^15.9.0",
     "nodemon": "^3.1.4",
+    "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.8.10",
-    "typescript": "^5.5.4",
+    "typescript": "^5.8.3",
     "typescript-eslint": "^8.0.0"
   }
 }
