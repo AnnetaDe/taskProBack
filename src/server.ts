@@ -38,7 +38,7 @@ const startServer = async () => {
     origin: [FRONTEND_URL, 'http://192.168.1.73:5173'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
 
   }));
   app.use(express.json());

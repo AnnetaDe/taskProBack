@@ -178,7 +178,7 @@ const patchUser: Controller = async (req, res) => {
     if (userWithNewMail) {
       throw new HttpError(
         408,
-        'Cannot change email to that which is already occupied.'
+        'Cannot change email to that which is already in use.'
       );
     }
 
