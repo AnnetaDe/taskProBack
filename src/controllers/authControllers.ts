@@ -198,9 +198,10 @@ const patchUser: Controller = async (req, res) => {
   }
 
   if (req?.file?.path) {
+    
     try {
       const { secure_url } = await cloudinary.uploader.upload(req.file.path, {
-        folder: 'avatars',
+        folder: 'taskPro',
       });
 
       avatarUrl = secure_url;
