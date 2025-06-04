@@ -60,16 +60,13 @@ const registerUser: Controller = async (req, res) => {
 
 const loginUser: Controller = async (req, res) => {
   const { email, password } = req.body;
+
   const JWT_SECRET = env('JWT_SECRET');
   const JWT_SECRET_REFRESH = env('JWT_SECRET_REFRESH');
-  const JWT_EXPIRATION = env('JWT_EXPIRATION') || '1d';
-  const JWT_REFRESH_EXPIRATION = env('JWT_REFRESH_EXPIRATION') || '7d';
 
-  if (!JWT_SECRET) {
+
+  if (!JWT_SECRET || !JWT_SECRET_REFRESH) {
     throw new Error('JWT_SECRET environment variable is not set');
-  }
-  if (!JWT_SECRET_REFRESH) {
-    throw new Error('JWT_SECRET_REFRESH environment variable is not set');
   }
 
   const user = await authServices.findUser({ email });
@@ -90,11 +87,10 @@ const loginUser: Controller = async (req, res) => {
     );
   }
   const payload = { id: user._id };
-  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
+  const token = jwt.sign(payload, JWT_SECRET);
   const refreshToken = jwt.sign(
     payload,
     JWT_SECRET_REFRESH,
-    { expiresIn: JWT_REFRESH_EXPIRATION }
   );
   const session = await authServices.createSession({
     userId: user._id,
@@ -305,8 +301,7 @@ const resendVerifyMessage: Controller = async (req, res) => {
 const refreshTokens: Controller = async (req, res) => {
   const { authorization } = req.headers;
 
-  const JWT_SECRET = env('JWT_SECRET');
-  const JWT_EXPIRATION = env('JWT_EXPIRATION') || '1d';
+  const JWT_SECRET = env('JWT_SECRET') as string;
 
   if (!authorization) {
     throw new HttpError(401, 'Authorization header not found');
@@ -329,9 +324,9 @@ const refreshTokens: Controller = async (req, res) => {
     throw new HttpError(401, 'Invalid or expired token');
   }
 
-  const payload = { id: decoded.id };
+  const payload: { id: string } = { id: String(decoded.id) };
 
-  const newToken = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
+  const newToken = jwt.sign(payload, JWT_SECRET);
 
   res.json({
     status: 200,
@@ -382,7 +377,6 @@ const googleRedirect: Controller = async (req, res) => {
   const { email, name, picture, id } = googleUser;
 
   const JWT_SECRET = env('JWT_SECRET');
-  const JWT_EXPIRATION = env('JWT_EXPIRATION') || '1d';
 
   let user = await authServices.findUser({ email });
 
@@ -403,7 +397,7 @@ const googleRedirect: Controller = async (req, res) => {
     throw new Error('JWT_SECRET environment variable is not set');
   }
 
-  const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
+  const token = jwt.sign({ id: user._id }, JWT_SECRET, );
 
   return res.redirect(`${env('FRONTEND_URL')}?token=${token}`);
 };
