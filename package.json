@@ -11,7 +11,7 @@
     "build": "tsc && tsc-alias",
     "build-w": "tsc && tsc-alias -w",
     "dev": "nodemon ./dist/app.js",
-    "start": "tsc && tsc-alias && node ./dist/app.js",
+    "start": "node ./dist/app.js",
     "test": "jest"
   },
   "keywords": [],
