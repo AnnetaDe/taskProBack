@@ -4,8 +4,8 @@ TaskPro Backend is a fully functional **backend server** designed for **Trello/J
 
 ## 🔗 Live API & Documentation
 
-- **Swagger API Documentation**: [View on Render](https://task-pro-backend-xdd4.onrender.com/api-docs)
-- **GitHub Repository**: [TaskPro Backend](https://github.com/DmytroLysachenko/task-pro-backend)
+- **Swagger API Documentation**: [View on RailWay](https://task-pro-backend-xdd4.onrender.com/api-docs)
+- **GitHub Repository**: [TaskPro Backend](https://github.com/AnnetaDe/taskProBack)
 
 ---
 
