@@ -57,7 +57,7 @@ const startServer = async () => {
     res.status(404).json({ message: 'Route not found' });
   });
 
-  app.use((err: HttpError, req: Request, res: Response) => {
+  app.use((err: HttpError, req: Request, res: Response, next: express.NextFunction) => {
     if (err instanceof HttpError) {
       res.status(err.statusCode).json({ message: err.message });
     } else {
