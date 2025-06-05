@@ -58,6 +58,15 @@ cd task-pro-backend
 ```
 
 ### 2️⃣ Install Dependencies
+Ensure that **dev dependencies** are installed. If your environment sets
+`NODE_ENV=production`, run:
+
+```sh
+NODE_ENV=development npm install
+```
+
+Otherwise simply run:
+
 ```sh
 npm install
 ```
