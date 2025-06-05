@@ -53,8 +53,7 @@ TaskPro Backend is a fully functional **backend server** designed for **Trello/J
 
 ### 1️⃣ Clone the Repository
 ```sh
-git clone https://github.com/DmytroLysachenko/task-pro-backend.git
-cd task-pro-backend
+https://github.com/AnnetaDe/taskProBack
 ```
 
 ### 2️⃣ Install Dependencies
