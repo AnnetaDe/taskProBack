@@ -42,6 +42,7 @@ const startServer = async () => {
 
   }));
   app.use(express.json());
+  app.use('/', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
   app.use('/api/auth', authRouter);
 
