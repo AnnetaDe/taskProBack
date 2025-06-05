@@ -4,7 +4,7 @@ TaskPro Backend is a fully functional **backend server** designed for **Trello/J
 
 ## 🔗 Live API & Documentation
 
-- **Swagger API Documentation**: [View on RailWay](https://taskproback-production.up.railway.app/api-docs/)
+- **Swagger API Documentation**: [View on RailWay](https://task-pro-backend-xdd4.onrender.com/api-docs)
 - **GitHub Repository**: [TaskPro Backend](https://github.com/AnnetaDe/taskProBack)
 
 ---
@@ -53,7 +53,7 @@ TaskPro Backend is a fully functional **backend server** designed for **Trello/J
 
 ### 1️⃣ Clone the Repository
 ```sh
-https://taskproback-production.up.railway.apphttps://github.com/AnnetaDe/taskProBack
+https://github.com/AnnetaDe/taskProBack
 ```
 
 ### 2️⃣ Install Dependencies
