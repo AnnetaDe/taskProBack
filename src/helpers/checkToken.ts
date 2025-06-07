@@ -8,7 +8,7 @@ import { findSession } from '../services/authServices';
 const JWT_SECRET = env('JWT_SECRET');
 const JWT_SECRET_REFRESH = env('JWT_SECRET_REFRESH');
 
-export const checkAuthToken = (token: string | undefined): boolean => {
+export const checkAuthToken = (token: string | undefined): string | false => {
     if (!token || !token.startsWith('Bearer ')) return false;
   
     const rawToken = token.split(' ')[1];
@@ -18,12 +18,16 @@ export const checkAuthToken = (token: string | undefined): boolean => {
       if (!JWT_SECRET) throw new Error('JWT secret is not defined');
   
       const decoded = jwt.verify(rawToken, JWT_SECRET) as jwt.JwtPayload;
-  
-      return typeof decoded.id === 'string' && decoded.id.length > 0;
+
+      if (typeof decoded.id === 'string' && decoded.id.length > 0) {
+        return decoded.id;
+      } else {
+        return false;
+      }
     } catch {
       return false;
     }
-  };
+};
 
 
 export const checkRefreshToken = async (token: string | undefined): Promise<boolean> => {

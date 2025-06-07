@@ -81,7 +81,10 @@ import { checkAuthToken } from '../helpers/checkToken';
 export const authenticate: Controller = async (req, res, next) => {
   try {
     const bearerToken = req.headers.authorization || `Bearer ${req.cookies?.token}`;
+
     const userId = checkAuthToken(bearerToken);
+ 
+
     if (!userId) {
       throw new HttpError(401, 'Authentication token not found or invalid');
     }
