@@ -16,6 +16,7 @@ import env from '../helpers/env';
 // If the file does not exist, create it at ../helpers/sendMail.ts with the appropriate implementation.
 import { Controller } from '../types';
 import sendEmail from '../helpers/sendEmail';
+import { checkRefreshToken } from '../helpers/checkToken';
 
 const registerUser: Controller = async (req, res) => {
   const { username, email, password } = req.body;
@@ -320,41 +321,64 @@ const resendVerifyMessage: Controller = async (req, res) => {
 };
 
 const refreshTokens: Controller = async (req, res) => {
-  const { authorization } = req.headers;
 
-  const JWT_SECRET = env('JWT_SECRET') as string;
-
-  if (!authorization) {
-    throw new HttpError(401, 'Authorization header not found');
+  const JWT_SECRET = env('JWT_SECRET');
+  const JWT_SECRET_REFRESH = env('JWT_SECRET_REFRESH');
+  if (!JWT_SECRET_REFRESH) {
+    throw new Error('JWT_SECRET_REFRESH environment variable is not set');
   }
+
 
   if (!JWT_SECRET) {
     throw new Error('JWT_SECRET environment variable is not set');
   }
 
-  const [bearer, token] = authorization.split(' ');
+  const bearer = req.headers.authorization;
+  const refreshId = checkRefreshToken(bearer);
 
-  if (bearer !== 'Bearer' || !token) {
-    throw new HttpError(401, 'Invalid token format');
+  if (!refreshId) {
+    throw new HttpError(401, 'Invalid or missing refresh token');
+  }
+  const rawToken = bearer!.split(' ')[1];
+
+const session = await authServices.findSession({ userId: refreshId });
+  if (!session || session.refreshToken !== rawToken) {
+    throw new HttpError(401, 'Refresh session invalid or expired');
   }
 
-  let decoded;
-  try {
-    decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload;
-  } catch {
-    throw new HttpError(401, 'Invalid or expired token');
-  }
+  const payload = { id: refreshId };
+  const newAccessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
+  const newRefreshToken = jwt.sign(payload, JWT_SECRET_REFRESH, { expiresIn: '7d' });
+  await authServices.createSession({
+    userId: refreshId,
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
+  });
+  const isProd = process.env.NODE_ENV === 'production';
 
-  const payload: { id: string } = { id: String(decoded.id) };
+  res.cookie('token', newAccessToken, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    maxAge: 3600000,
+  });
 
-  const newToken = jwt.sign(payload, JWT_SECRET);
+  res.cookie('refreshToken', newRefreshToken, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    maxAge: 86400000,
+  });
 
   res.json({
     status: 200,
     data: {
-      token: newToken,
+      token: newAccessToken,
+      refreshToken: newRefreshToken,
     },
   });
+
+  
 };
 
 const googleAuth: Controller = async (req, res) => {
