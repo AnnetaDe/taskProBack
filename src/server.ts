@@ -35,10 +35,11 @@ const startServer = async () => {
   app.use(cookieParser());
 
   app.use(cors({
-    origin: [FRONTEND_URL, 'http://192.168.1.73:5173'],
+    origin: FRONTEND_URL,
+    optionsSuccessStatus: 200,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-CSRF-Token', 'X-Requested-With', 'X-HTTP-Method-Override'],
 
   }));
   app.use(express.json());

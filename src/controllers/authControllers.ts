@@ -104,20 +104,20 @@ const loginUser: Controller = async (req, res) => {
     httpOnly: true,
     secure: isProd? true : false,
     sameSite: isProd ? 'none' : 'lax',
-    maxAge: 1000 * 60 * 60 * 24,
+    maxAge: 3600000, 
   });
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
     secure: isProd ? true : false,
     sameSite: isProd ? 'none' : 'lax',
-    maxAge: 1000 * 60 * 60 * 24 * 7,
+    maxAge: 86400000,
   });
 
   res.cookie('sid', String(session._id), {
     httpOnly: true,
     secure: isProd,
     sameSite: isProd ? 'none' : 'lax',
-    maxAge: 1000 * 60 * 60 * 24,
+    maxAge: 86400000,
   });
   res.json({
     status: 200,
