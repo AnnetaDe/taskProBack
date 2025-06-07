@@ -106,14 +106,13 @@ const loginUser: Controller = async (req, res) => {
     sameSite: isProd ? 'none' : 'lax',
     maxAge: 1000 * 60 * 60 * 24,
   });
-
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
     secure: isProd ? true : false,
     sameSite: isProd ? 'none' : 'lax',
     maxAge: 1000 * 60 * 60 * 24 * 7,
   });
-  
+
   res.cookie('sid', String(session._id), {
     httpOnly: true,
     secure: isProd,
@@ -139,6 +138,9 @@ const loginUser: Controller = async (req, res) => {
 const logoutUser: Controller = async (req, res) => {
   const { _id } = req.user as { _id: string };
   await authServices.abortUserSession({ userId: _id });
+  res.clearCookie('token');
+  res.clearCookie('refreshToken');
+  res.clearCookie('sid');
   res.status(204).json({
     status: 204,
   });
