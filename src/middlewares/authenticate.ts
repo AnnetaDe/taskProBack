@@ -39,7 +39,6 @@ export const authenticate: Controller = async (req, res, next) => {
     }
 
     const session = await findSession({ userId: id });
-    console.log('Session:', session);
 
     if (!session) {
       throw new HttpError(401, 'User already logged out');
