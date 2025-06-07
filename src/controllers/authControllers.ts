@@ -92,23 +92,24 @@ const loginUser: Controller = async (req, res) => {
     payload,
     JWT_SECRET_REFRESH,
   );
+    const isProd = process.env.NODE_ENV === 'production';
+
   const session = await authServices.createSession({
     userId: user._id,
     accessToken: token,
     refreshToken: refreshToken, 
   });
-  const isProd = process.env.NODE_ENV === 'production';
 
   res.cookie('token', token, {
     httpOnly: true,
-    secure: isProd,
+    secure: isProd? true : false,
     sameSite: isProd ? 'none' : 'lax',
     maxAge: 1000 * 60 * 60 * 24,
   });
 
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
-    secure: isProd,
+    secure: isProd ? true : false,
     sameSite: isProd ? 'none' : 'lax',
     maxAge: 1000 * 60 * 60 * 24 * 7,
   });
