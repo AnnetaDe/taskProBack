@@ -26,7 +26,9 @@ dotenv.config();
 const startServer = async () => {
   const PORT = env('PORT')||3000;
   const app = express();
-  const FRONTEND_URL = env('FRONTEND_URL') || 'http://192.168.1.73:5173';
+  const FRONTEND_URL = env('FRONTEND_URL')
+  const whitelist = [FRONTEND_URL, 'http://localhost:5173', 'http://192.168.1.73:5173'];
+
 
   console.log(`Server running on port ${PORT}`, `Frontend URL: ${FRONTEND_URL}`, `Public directory: ${publicDirPath}`);
 
@@ -35,7 +37,13 @@ const startServer = async () => {
   app.use(cookieParser());
 
   app.use(cors({
-    origin: FRONTEND_URL,
+    origin: function (origin, callback) {
+      if (!origin || whitelist.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     optionsSuccessStatus: 200,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
