@@ -4,6 +4,11 @@ import { findSession, findUser } from '../services/authServices';
 import env from '../helpers/env.js';
 import { Controller } from '../types';
 
+
+
+// This middleware checks for a valid JWT token in the request headers or cookies,
+// verifies it, and retrieves the user information. If the token is valid, it attaches
+// the user information to the request object.
 export const authenticate: Controller = async (req, res, next) => {
   try {
 
@@ -61,3 +66,4 @@ export const authenticate: Controller = async (req, res, next) => {
     }
   }
 };
+

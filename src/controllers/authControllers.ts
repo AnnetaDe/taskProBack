@@ -138,11 +138,24 @@ const loginUser: Controller = async (req, res) => {
 const logoutUser: Controller = async (req, res) => {
   const { _id } = req.user as { _id: string };
   await authServices.abortUserSession({ userId: _id });
-  res.clearCookie('token');
-  res.clearCookie('refreshToken');
-  res.clearCookie('sid');
-  res.status(204).json({
+  res.clearCookie('token', {
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production',
+  });
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production',
+  });
+  res.clearCookie('sid', {
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production',
+  });
+  res.json({
     status: 204,
+    message: 'User successfully logged out',
   });
 };
 
