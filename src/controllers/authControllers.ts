@@ -133,7 +133,7 @@ const loginUser: Controller = async (req, res) => {
     },
   });
 };
-
+// max-age droped
 const logoutUser: Controller = async (req, res) => {
   const { _id } = req.user as { _id: string };
   await authServices.abortUserSession({ userId: _id });
