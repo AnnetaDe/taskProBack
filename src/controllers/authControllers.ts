@@ -138,20 +138,24 @@ const loginUser: Controller = async (req, res) => {
 const logoutUser: Controller = async (req, res) => {
   const { _id } = req.user as { _id: string };
   await authServices.abortUserSession({ userId: _id });
+  const isProd = process.env.NODE_ENV === 'production';
   res.clearCookie('token', {
     httpOnly: true,
-    sameSite: 'strict',
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProd ? true : false,
+    sameSite: isProd ? 'none' : 'lax',
+    maxAge: 3000000, // 1 hour
   });
   res.clearCookie('refreshToken', {
     httpOnly: true,
-    sameSite: 'strict',
-    secure: process.env.NODE_ENV === 'production',
+    sameSite: isProd ? 'none' : 'lax',
+    secure: isProd ? true : false,
+    maxAge: 86400000,
   });
   res.clearCookie('sid', {
     httpOnly: true,
-    sameSite: 'strict',
-    secure: process.env.NODE_ENV === 'production',
+    sameSite: isProd ? 'none' : 'lax',
+    secure: isProd ? true : false,
+    maxAge: 86400000,
   });
   res.json({
     status: 204,
