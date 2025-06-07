@@ -32,7 +32,7 @@ const startServer = async () => {
 
   app.use(express.static(publicDirPath));
   app.use(morgan('tiny'));
-    app.use(cookieParser());
+  app.use(cookieParser());
 
   app.use(cors({
     origin: [FRONTEND_URL, 'http://192.168.1.73:5173'],

@@ -1,4 +1,3 @@
-import cookieParser from 'cookie-parser';
 import HttpError from '../helpers/HttpError';
 import jwt from 'jsonwebtoken';
 import { findSession, findUser } from '../services/authServices';
@@ -7,10 +6,7 @@ import { Controller } from '../types';
 
 export const authenticate: Controller = async (req, res, next) => {
   try {
-    cookieParser()(req, res, () => {
-      console.log('Cookies:', req.cookies);
-      console.log('Headers:', req.headers);
-    });
+
     const token =
   req.headers.authorization?.startsWith('Bearer ')
     ? req.headers.authorization.split(' ')[1]
